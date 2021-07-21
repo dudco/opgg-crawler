@@ -15,9 +15,18 @@ async function getPage(url: string) {
     return cheerio.load(html.data);
 }
 
+interface Champion {
+    id: number;
+    key: string;
+    name: string;
+    image: any;
+    position: string[];
+}
+
 router.get('/', async (req: Request, res: Response) => {
     const $ = await getPage("statistics");
-    const ret: Object[] = [];
+    const ret: Champion[] = [];
+    const keys: string[] = [];
 
     const championHtmlList = $("div.champion-index__champion-item");
     championHtmlList.each((_, elem) => {
@@ -28,13 +37,22 @@ router.get('/', async (req: Request, res: Response) => {
             position.push($(pElem).text());
         });
 
-        const data =  {
+        keys.push(elemAttr["data-champion-key"].toString());
+
+        const data: Champion =  {
+            id: 0,
             key: elemAttr["data-champion-key"].toString(),
             name: elemAttr["data-champion-name"].toString(),
             image: $(elem).find(".champion-index__champion-item__image > *").attr(),
             position,
         }
         ret.push(data);
+    })
+
+    keys.sort();
+    
+    ret.forEach((data) => {
+        data.id = keys.indexOf(data["key"]);
     })
     res.json(ret);
 });

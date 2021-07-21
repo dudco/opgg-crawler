@@ -74,4 +74,96 @@ router.get('/trend/:type/:position', async (req: Request<{position: string, type
     res.json(ret);
 })
 
+interface Rate {
+    pick: {
+        percentage: string;
+        number: string;
+    };
+    win: string;
+}
+
+interface WinRate {
+    win: string;
+}
+
+interface Item {
+    image: string;
+    description: string;
+}
+
+interface ChampionStat {
+    position: {
+        role: string;
+        rate: string;
+    }[];
+
+    name: string;
+    tier: string;
+    skills: {
+        image: string;
+        video: string;
+        description: string;
+        key: string;
+    }[];
+
+    counter: {
+        id: number;
+        name: string;
+        rate: WinRate;
+    }[];
+
+    discounter: {
+        id: number;
+        name: string;
+        rate: WinRate;
+    }[];
+
+    recommend_spells: {
+        spell: {
+            image: string;
+            description: string;
+        }[];
+        rate: Rate;
+    }[];
+    recommend_skill_build: {
+        order: string[];
+        rate: Rate;
+    };
+    recommend_item_build: {
+        starting: {
+            items:Item[];
+            rate: Rate;
+        }[];
+        recommand: {
+            items: Item[];
+            rate: Rate;
+        }[];
+        shoes: {
+            item: Item;
+            rate: Rate;
+        }
+    }
+    // ChampionKeystoneRune-1, ChampionKeystoneRune-2
+    rune: {
+        name: string;
+        rate: Rate;
+        images: {
+            main: string;
+            key: string;
+            sub: string;
+        }
+    }[];
+}
+
+router.get('/:champ/:position', async (req: Request<{champ: string, position: string}>, res: Response) => {
+    const $ = await getPage(`${req.params.champ}/statistics/${req.params.position}`);
+    
+    const ret = {};
+
+    // get position
+    $(".champion-stats-position champion-stats-header__position__role").each((_, elem) => {
+
+    });
+});
+
 export default router;

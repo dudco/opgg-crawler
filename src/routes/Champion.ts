@@ -2,6 +2,8 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import {Router, Request, Response} from "express";
 
+let championList: Champion[] = []
+
 const router = Router();
 
 async function getPage(url: string) {
@@ -26,8 +28,7 @@ interface Champion {
 router.get('/', async (req: Request, res: Response) => {
     const $ = await getPage("statistics");
     const ret: Champion[] = [];
-    const keys: string[] = [];
-
+    const key: string[] = [];
     const championHtmlList = $("div.champion-index__champion-item");
     championHtmlList.each((_, elem) => {
         const elemAttr = $(elem).attr();
@@ -37,7 +38,7 @@ router.get('/', async (req: Request, res: Response) => {
             position.push($(pElem).text());
         });
 
-        keys.push(elemAttr["data-champion-key"].toString());
+        key.push(elemAttr["data-champion-key"].toString());
 
         const data: Champion =  {
             id: 0,
@@ -49,11 +50,13 @@ router.get('/', async (req: Request, res: Response) => {
         ret.push(data);
     })
 
-    keys.sort();
+    key.sort();
     
     ret.forEach((data) => {
-        data.id = keys.indexOf(data["key"]);
+        data.id = key.indexOf(data["key"]);
     })
+
+    championList = ret;
     res.json(ret);
 });
 
@@ -69,6 +72,8 @@ router.get('/trend/:type/:position', async (req: Request<{position: string, type
         let change = Number($(elem).find(".champion-index-table__cell--change").text());
         change *= $(elem).find(".champion-index-table__cell--change--down").length !== 0 ? -1 : 1
         const image = $(elem).find("i").attr();
+        // console.log()
+        const id = Number(image["class"].split(" ")[2].split("-")[1]);
         const name = $(elem).find(".champion-index-table__name").text();
         const position = $(elem).find(".champion-index-table__position").text().replace(/\n/g, "").replace(/\t/g, "");
         const winRate = req.params.type !== "tier" ? req.params.type !== "winratio" ?  req.params.type !== "pickratio" ? "" : $(elem).find("td:nth-child(5)").text() : $(elem).find("td:nth-child(4)").text() : $(elem).find("td:nth-child(5)").text();
@@ -77,6 +82,7 @@ router.get('/trend/:type/:position', async (req: Request<{position: string, type
         const tierIcon = req.params.type === "tier" ? $(elem).find("td:nth-child(7) > img").attr()["src"] : "";
 
         const data = {
+            id,
             rank,
             change,
             image,
@@ -91,97 +97,5 @@ router.get('/trend/:type/:position', async (req: Request<{position: string, type
     });
     res.json(ret);
 })
-
-interface Rate {
-    pick: {
-        percentage: string;
-        number: string;
-    };
-    win: string;
-}
-
-interface WinRate {
-    win: string;
-}
-
-interface Item {
-    image: string;
-    description: string;
-}
-
-interface ChampionStat {
-    position: {
-        role: string;
-        rate: string;
-    }[];
-
-    name: string;
-    tier: string;
-    skills: {
-        image: string;
-        video: string;
-        description: string;
-        key: string;
-    }[];
-
-    counter: {
-        id: number;
-        name: string;
-        rate: WinRate;
-    }[];
-
-    discounter: {
-        id: number;
-        name: string;
-        rate: WinRate;
-    }[];
-
-    recommend_spells: {
-        spell: {
-            image: string;
-            description: string;
-        }[];
-        rate: Rate;
-    }[];
-    recommend_skill_build: {
-        order: string[];
-        rate: Rate;
-    };
-    recommend_item_build: {
-        starting: {
-            items:Item[];
-            rate: Rate;
-        }[];
-        recommand: {
-            items: Item[];
-            rate: Rate;
-        }[];
-        shoes: {
-            item: Item;
-            rate: Rate;
-        }
-    }
-    // ChampionKeystoneRune-1, ChampionKeystoneRune-2
-    rune: {
-        name: string;
-        rate: Rate;
-        images: {
-            main: string;
-            key: string;
-            sub: string;
-        }
-    }[];
-}
-
-router.get('/:champ/:position', async (req: Request<{champ: string, position: string}>, res: Response) => {
-    const $ = await getPage(`${req.params.champ}/statistics/${req.params.position}`);
-    
-    const ret = {};
-
-    // get position
-    $(".champion-stats-position champion-stats-header__position__role").each((_, elem) => {
-
-    });
-});
 
 export default router;
